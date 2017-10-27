@@ -8,7 +8,7 @@ class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """ 
 
-    def __init__(self, env, learning=False, epsilon=5.0, alpha=0.8):
+    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.5):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment 
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -22,6 +22,8 @@ class LearningAgent(Agent):
         ###########
         ## TO DO ##
         ###########
+        # Set any additional class parameters as needed
+        self.counter = 1
 
 
     def reset(self, destination=None, testing=False):
@@ -38,6 +40,13 @@ class LearningAgent(Agent):
         # Update epsilon using a decay function of your choice
         # Update additional class parameters as needed
         # If 'testing' is True, set epsilon and alpha to 0
+        '''if self.testing:
+            self.alpha = 0
+            self.epsilon = 0
+        else:
+            g = lambda x: 1/(x*x)
+            self.epsilon = g(self.counter)
+            self.counter += 1'''
 
         return None
 
@@ -74,9 +83,9 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-
-        maxQ = None
-
+        maxAction = max(self.Q[state], key = lambda x: self.Q[state][x])
+        maxQ = self.Q[state][maxAction]
+    
         return maxQ 
 
 
@@ -100,15 +109,30 @@ class LearningAgent(Agent):
         # Set the agent state and default action
         self.state = state
         self.next_waypoint = self.planner.next_waypoint()
-        action = None
-
+                
         ########### 
         ## TO DO ##
         ###########
         # When not learning, choose a random action
         # When learning, choose a random action with 'epsilon' probability
         # Otherwise, choose an action with the highest Q-value for the current state
-        # Be sure that when choosing an action with highest Q-value that you randomly select between actions that "tie".
+        # Be sure that when choosing an action with highest Q-value that you randomly select between actions that "tie".       
+        if not self.learning:
+            action = random.choice(self.valid_actions)
+        else:
+            if random.random() > self.epsilon:
+                maxVal = self.get_maxQ(state)
+                            
+                max_actions = []
+                for act in self.valid_actions:
+                    if self.Q[state][act] == maxVal:
+                        max_actions.append(act)
+                        
+                action = random.choice(max_actions)
+                
+            else:
+                random.choice(self.valid_actions)
+        
         return action
 
 
@@ -122,7 +146,7 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
-
+        
         return
 
 
@@ -164,7 +188,7 @@ def run():
     # Follow the driving agent
     # Flags:
     #   enforce_deadline - set to True to enforce a deadline metric
-    env.set_primary_agent(agent)
+    env.set_primary_agent(agent, enforce_deadline=True)
 
     ##############
     # Create the simulation
@@ -173,14 +197,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env)
+    sim = Simulator(env, update_delay=0.01, log_metrics=True)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run()
+    sim.run(n_test=10, tolerance = 0.005)
 
 
 if __name__ == '__main__':
