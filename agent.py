@@ -44,6 +44,8 @@ class LearningAgent(Agent):
             self.alpha = 0
             self.epsilon = 0
         else:
+            # linear decay:
+            # self.epsilon -= 0.05
             # g = lambda x: 1.0/(x * x) # 1 / t^2 decaying function, t is the number of trials
             # try a new decay function: e^(-a*t)
             self.epsilon = math.exp(-self.alpha*self.counter)
@@ -73,6 +75,8 @@ class LearningAgent(Agent):
         # Set 'state' as a tuple of relevant data for the agent 
         # We need to turn this data into strings so for the output to be visible
         # Define the following function to convert the features into strings
+        
+        '''For justification of the below chosen features, see answer of question 4'''
         state = (str(waypoint) + ", " + inputs['light'] + ", " + str(inputs['left']) + ", " +  str(inputs['oncoming']))
         return state
 
@@ -86,8 +90,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-        maxAction = max(self.Q[state], key = lambda x: self.Q[state][x])
-        maxQ = self.Q[state][maxAction]
+        maxQ = max(self.Q[state].values())
         return maxQ 
 
 
